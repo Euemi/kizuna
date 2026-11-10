@@ -2,6 +2,8 @@
 
 **Cada anime é um mundo. Entre nele.**
 
+🌐 **Acesse:** <https://euemi.github.io/kizuna/>
+
 Kizuna é uma plataforma para descobrir animes, montar sua estante e discutir com a comunidade, no estilo do Skoob, só que para animes. O diferencial é que a página de cada anime ganha o visual daquele universo: cores, tipografia, padrão de fundo e efeitos animados mudam conforme o anime que você abre.
 
 > 絆 (*kizuna*) significa "laço": o vínculo que a gente cria com as histórias e com quem assiste junto.
@@ -60,7 +62,7 @@ theme: mkTheme({
 - [ ] Mais mundos curados
 - [ ] Seguir amigos e ver o que eles estão assistindo
 - [ ] Recomendações com base na sua estante
-- [ ] Publicar no GitHub Pages
+- [x] Publicar no GitHub Pages
 
 ## 🙏 Créditos
 
