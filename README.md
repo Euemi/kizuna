@@ -18,7 +18,8 @@ Kizuna é uma plataforma para descobrir animes, montar sua estante e discutir co
 | ▶️ **Progresso por episódio** | Botão "+1", barra de progresso e mudança automática de status ao começar ou terminar um anime. |
 | ⭐ **Notas e resenhas** | Nota de 1 a 5, e cada resenha mostra em que episódio a pessoa estava quando escreveu. |
 | 💬 **Fórum sem spoiler** | Cada tópico indica até que episódio ele comenta. Se você ainda não chegou lá, o conteúdo fica escondido. |
-| 👤 **Perfil** | Episódios assistidos, horas de anime, nota média e atividade recente. |
+| 👤 **Perfil** | Criado uma única vez, com @nome de usuário, cor do avatar e gêneros favoritos. Mostra nível, XP, episódios assistidos, nota média e atividade recente. |
+| 🏅 **Badges** | 19 conquistas em bronze, prata, ouro e especiais, que são desbloqueadas usando a plataforma: maratonar, resenhar, debater no fórum, explorar todos os mundos... |
 
 ## 🚀 Como rodar
 

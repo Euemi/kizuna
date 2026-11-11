@@ -7,8 +7,11 @@ const Store = (() => {
   function seed() {
     const now = Date.now();
     return {
-      user: { name: 'Você', since: now },
+      user: { name: null, color: null, genres: [], since: now, created: false },
       library: {},
+      visited: [],       // mundos do catálogo já visitados (para badges)
+      badges: {},        // id da badge -> data em que foi desbloqueada
+      revealedCount: 0,
       reviews: SEED_REVIEWS.map((r) => ({ id: id(), animeId: r.animeId, author: r.author, rating: r.rating, ep: r.ep, text: r.text, createdAt: now - r.ago })),
       threads: SEED_THREADS.map((t) => ({
         id: id(), animeId: t.animeId, title: t.title, body: t.body, author: t.author, ep: t.ep, spoiler: t.spoiler,
@@ -22,6 +25,12 @@ const Store = (() => {
   let s = null;
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* armazenamento indisponível */ }
   if (!s || !s.library) s = seed();
+  // Migração de dados da versão anterior (antes do cadastro de perfil e das badges)
+  s.visited ??= []; s.badges ??= {}; s.revealedCount ??= 0;
+  if (s.user.created === undefined) Object.assign(s.user, { created: false, genres: [], color: null });
+
+  // Nomes já usados pela comunidade de exemplo
+  const TAKEN = new Set([...SEED_REVIEWS, ...SEED_THREADS, ...SEED_THREADS.flatMap((t) => t.replies)].map((x) => x.author.toLowerCase()));
 
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* ignora */ } };
   const blank = () => ({ status: null, ep: 0, rating: 0, fav: false, meta: {}, updatedAt: 0 });
@@ -43,7 +52,49 @@ const Store = (() => {
 
   return {
     get user() { return s.user; },
-    setName(n) { s.user.name = n.trim() || 'Você'; save(); },
+    // O nome é escolhido uma única vez, na criação do perfil
+    nameError(n) {
+      if (!/^[a-zA-Z0-9_.]{3,20}$/.test(n)) return 'Use de 3 a 20 caracteres: letras, números, ponto ou _';
+      if (TAKEN.has(n.toLowerCase())) return 'Esse nome já está em uso. Tente outro!';
+      return null;
+    },
+    createProfile({ name, color, genres }) {
+      const old = s.user.name;
+      Object.assign(s.user, { name, color, genres, created: true, since: Date.now() });
+      // conteúdos escritos antes do cadastro passam a ter o novo nome
+      for (const r of s.reviews) if (r.mine) r.author = name;
+      for (const t of s.threads) {
+        if (t.mine || t.author === old) t.author = name;
+        for (const r of t.replies) if (r.mine) r.author = name;
+      }
+      save();
+    },
+    visit(animeId) {
+      if (CATALOG_BY_ID[animeId] && !s.visited.includes(animeId)) { s.visited.push(animeId); save(); }
+    },
+    countReveal() { s.revealedCount++; save(); },
+    badges: () => s.badges,
+    unlock(ids) { const now = Date.now(); ids.forEach((b) => { s.badges[b] = now; }); save(); },
+    // Números usados pelas badges e pelo perfil
+    stats() {
+      const lib = Object.entries(s.library).map(([id, e]) => ({ id: +id, ...e }));
+      const genres = new Set(lib.filter((e) => e.status).flatMap((e) => e.meta?.genres || CATALOG_BY_ID[e.id]?.genres || []));
+      return {
+        shelf: lib.filter((e) => e.status).length,
+        eps: lib.reduce((n, e) => n + (e.ep || 0), 0),
+        completed: lib.filter((e) => e.status === 'completo').length,
+        dropped: lib.filter((e) => e.status === 'abandonado').length,
+        rated: lib.filter((e) => e.rating).length,
+        favs: lib.filter((e) => e.fav).length,
+        genres: genres.size,
+        reviews: s.reviews.filter((r) => r.mine).length,
+        threads: s.threads.filter((t) => t.mine).length,
+        replies: s.threads.reduce((n, t) => n + t.replies.filter((r) => r.mine).length, 0),
+        visited: s.visited.length,
+        revealed: s.revealedCount,
+        profile: s.user.created ? 1 : 0,
+      };
+    },
     entry: (animeId) => s.library[animeId] || blank(),
     library: () => Object.entries(s.library).map(([id, e]) => ({ id: +id, ...e })),
     activity: () => s.activity,

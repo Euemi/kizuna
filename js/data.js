@@ -13,7 +13,7 @@ function mkTheme(o) {
   return Object.assign({
     bg: '#0d0d14', surface: '#171723', text: '#ecebf5', muted: '#9a98b3',
     accent: '#ff4d8d', accent2: '#7c5cff', onAccent: '#ffffff',
-    display: "'Mochiy Pop One', sans-serif", body: "'Inter', sans-serif",
+    display: "'Poppins', sans-serif", body: "'Inter', sans-serif",
     pattern: 'none', effect: null, light: false,
   }, o);
 }

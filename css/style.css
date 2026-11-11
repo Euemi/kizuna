@@ -8,7 +8,7 @@
 
 :root {
   --on-accent: #fff;
-  --font-display: 'Mochiy Pop One', sans-serif;
+  --font-display: 'Poppins', sans-serif;
   --font-body: 'Inter', sans-serif;
   --radius: 16px;
   --line: color-mix(in srgb, var(--text) 12%, transparent);
@@ -47,7 +47,7 @@ img { display: block; max-width: 100%; }
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line);
 }
-.logo { font-family: 'Mochiy Pop One', sans-serif; font-size: 22px; color: var(--accent); white-space: nowrap; }
+.logo { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 22px; color: var(--accent); white-space: nowrap; }
 .logo span { color: var(--text); font-size: 18px; }
 .nav { display: flex; gap: 4px; }
 .nav a { padding: 8px 14px; border-radius: 999px; color: var(--muted); font-weight: 600; font-size: 15px; transition: background .2s, color .2s; }
@@ -104,8 +104,8 @@ label.check { display: inline-flex; align-items: center; gap: 8px; font-size: 14
 
 /* ===== Home ===== */
 .hero { padding: 40px 0 8px; max-width: 760px; }
-.hero h1 { font-family: 'Mochiy Pop One', sans-serif; font-size: clamp(32px, 6vw, 56px); font-weight: 400; }
-.hero h1 em { font-style: normal; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero h1 { font-family: 'Poppins', sans-serif; font-size: clamp(32px, 6vw, 56px); font-weight: 700; letter-spacing: -.02em; }
+.hero h1 em { font-style: normal; font-weight: 800; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .hero p { font-size: 18px; color: var(--muted); margin: 16px 0 0; }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; }
@@ -125,7 +125,6 @@ label.check { display: inline-flex; align-items: center; gap: 8px; font-size: 14
 .tcard-body { padding: 0 14px 14px; margin-top: -42px; position: relative; z-index: 1; }
 .tcard h3 { font-family: var(--c-font); font-weight: 400; font-size: 23px; line-height: 1.1; color: var(--c-text); }
 .tcard .meta { font-size: 13px; opacity: .75; margin-top: 4px; }
-.tcard .bar { height: 3px; background: linear-gradient(90deg, var(--c-accent), var(--c-accent2)); }
 .tcard .badge { position: absolute; top: 10px; left: 10px; z-index: 2; padding: 3px 10px; border-radius: 999px; background: var(--c-accent); color: var(--c-on); font-size: 12px; font-weight: 700; }
 .tcard .prog { height: 4px; border-radius: 4px; background: color-mix(in srgb, var(--c-text) 15%, transparent); margin-top: 10px; overflow: hidden; }
 .tcard .prog i { display: block; height: 100%; background: var(--c-accent); }
@@ -203,6 +202,61 @@ label.check { display: inline-flex; align-items: center; gap: 8px; font-size: 14
 .activity { padding: 0; margin: 0; }
 .bars { display: grid; gap: 10px; }
 .bars div { display: grid; grid-template-columns: 130px 1fr 32px; gap: 10px; align-items: center; font-size: 14px; }
+
+/* ===== Criação de perfil ===== */
+.onboarding { max-width: 560px; margin: 24px auto 0; text-align: center; padding: 36px clamp(20px, 5vw, 44px); }
+.onboarding h1 { font-family: var(--font-display); font-size: 34px; margin: 14px 0 6px; }
+.onboarding .form { text-align: left; margin-top: 26px; gap: 22px; }
+.onb-avatar { display: grid; place-items: center; }
+.avatar.xl { width: 96px; height: 96px; font-size: 40px; box-shadow: 0 12px 30px -10px var(--accent); transition: background .3s; }
+.field { display: grid; gap: 8px; font-weight: 600; font-size: 15px; }
+.at-input { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--bg) 60%, transparent); padding-left: 14px; }
+.at-input:focus-within { border-color: var(--accent); }
+.at-input > span { color: var(--muted); font-weight: 700; }
+.at-input input { border: 0; background: none; padding-left: 4px; font-weight: 600; }
+.hint { font-weight: 500; color: var(--muted); }
+.hint.bad { color: #f87171; }
+.hint.good { color: #4ade80; }
+.swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+.swatch { width: 36px; height: 36px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: transform .15s; }
+.swatch:hover { transform: scale(1.1); }
+.swatch.on { border-color: var(--text); transform: scale(1.12); }
+.btn.big { padding: 14px 22px; font-size: 16px; margin-top: 6px; }
+
+/* ===== Perfil e badges ===== */
+.profile-card { display: grid; grid-template-columns: auto 1fr auto; gap: 28px; align-items: center; padding: 28px; }
+.ring { position: relative; padding: 6px; border-radius: 50%; background: conic-gradient(var(--accent) calc(var(--p) * 1%), color-mix(in srgb, var(--text) 12%, transparent) 0); }
+.ring .avatar { border: 4px solid var(--surface); box-shadow: none; }
+.ring .lvl { position: absolute; bottom: 0; right: 0; min-width: 34px; height: 34px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); font-weight: 800; border: 3px solid var(--surface); }
+.who h1 { font-family: var(--font-display); font-size: clamp(26px, 4vw, 36px); }
+.rank { color: var(--accent); font-weight: 700; margin: 2px 0 10px; }
+.xp { display: grid; gap: 4px; max-width: 360px; margin-bottom: 8px; }
+.showcase { text-align: center; display: grid; gap: 8px; justify-items: center; }
+.showcase-row { display: flex; gap: 8px; }
+
+.medal { width: 52px; height: 52px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 24px; background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--tier) 45%, var(--surface)), var(--surface) 75%); border: 3px solid var(--tier); box-shadow: 0 0 18px -6px var(--tier); }
+.medal.sm { width: 42px; height: 42px; font-size: 20px; }
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.badge-card { display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); transition: transform .2s, border-color .2s; }
+.badge-card.got { border-color: color-mix(in srgb, var(--tier) 45%, transparent); }
+.badge-card.got:hover { transform: translateY(-3px); }
+.badge-card .medal { --tier: inherit; }
+.badge-card.locked .medal { filter: grayscale(1); opacity: .45; }
+.badge-card.locked .badge-name { color: var(--muted); }
+.badge-name { font-weight: 700; }
+.badge-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.badge-meta .tier { color: var(--tier); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.badge-prog { height: 6px; border-radius: 6px; background: color-mix(in srgb, var(--text) 12%, transparent); overflow: hidden; margin-top: 8px; }
+.badge-prog i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+
+#toast.badge-toast { display: flex; align-items: center; gap: 12px; text-align: left; background: var(--surface); color: var(--text); border: 1px solid var(--accent); padding: 10px 20px 10px 10px; }
+#toast.badge-toast small { color: var(--accent); font-weight: 700; }
+
+@media (max-width: 700px) {
+  .profile-card { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .xp { margin-inline: auto; }
+  .badge-grid { grid-template-columns: 1fr; }
+}
 
 #toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 120px); background: var(--accent); color: var(--on-accent); padding: 12px 22px; border-radius: 999px; font-weight: 600; transition: transform .35s cubic-bezier(.2,1.4,.4,1); z-index: 50; box-shadow: 0 10px 30px -10px var(--accent); max-width: calc(100% - 32px); text-align: center; }
 #toast.show { transform: translate(-50%, 0); }

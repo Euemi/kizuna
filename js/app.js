@@ -23,13 +23,37 @@ function colorOf(name) {
   let h = 0; for (const c of String(name)) h = (h * 31 + c.charCodeAt(0)) % 360;
   return `hsl(${h} 60% 48%)`;
 }
-const avatar = (name) => `<span class="avatar" style="background:${colorOf(name)}">${esc(String(name)[0]?.toUpperCase() || '?')}</span>`;
+const avatar = (name, cls = '') => {
+  const color = name === Store.user.name && Store.user.color ? Store.user.color : colorOf(name);
+  return `<span class="avatar ${cls}" style="background:${color}">${esc(String(name)[0]?.toUpperCase() || '?')}</span>`;
+};
 const starsTxt = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
 
-function toast(msg) {
+// Fila de avisos: mensagens comuns e badges desbloqueadas aparecem uma de cada vez
+const toastQueue = [];
+function toast(msg, badge) {
+  toastQueue.push({ msg, badge });
+  if (toastQueue.length === 1) nextToast();
+}
+function nextToast() {
+  const item = toastQueue[0];
+  if (!item) return;
   const t = $('#toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2200);
+  t.classList.toggle('badge-toast', !!item.badge);
+  if (item.badge) {
+    const b = item.badge;
+    t.innerHTML = `<span class="medal sm" style="--tier:${TIERS[b.tier].color}">${b.icon}</span><span><small>Nova badge desbloqueada!</small><br><b>${esc(b.name)}</b></span>`;
+  } else t.textContent = item.msg;
+  t.classList.add('show');
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => { toastQueue.shift(); nextToast(); }, 350);
+  }, item.badge ? 3200 : 2000);
+}
+function checkBadges() {
+  const fresh = Badges.check();
+  fresh.forEach((b) => toast(null, b));
+  return fresh.length;
 }
 
 function applyTheme(t) {
@@ -87,7 +111,6 @@ function card(a) {
       <div class="meta">${[a.year, eps ? `${eps} eps` : (a.airing || a.id === 21 ? 'em exibição' : null), a.score ? `★ ${a.score}` : null].filter(Boolean).join(' · ')}</div>
       ${e.status === 'assistindo' && eps ? `<div class="prog"><i style="width:${pct}%"></i></div><div class="meta">ep ${e.ep} de ${eps}</div>` : ''}
     </div>
-    <div class="bar"></div>
   </a>`;
 }
 const skeletons = (n) => Array.from({ length: n }, () => '<div class="skeleton"></div>').join('');
@@ -199,7 +222,7 @@ function pageSearch(rid, q) {
 function pageAnime(rid, id) {
   const cur = CATALOG_BY_ID[id];
   page = { anime: cur ? { ...cur, image: imgCache[id] } : null, tab: page.anime?.id === id ? page.tab : 'sobre' };
-  if (cur) { applyTheme(cur.theme); drawAnime(); }
+  if (cur) { Store.visit(id); checkBadges(); applyTheme(cur.theme); drawAnime(); }
   else app.innerHTML = '<div class="empty"><div class="big">⏳</div>Carregando…</div>';
   Api.anime(id).then((d) => {
     if (rid !== routeId) return;
@@ -365,25 +388,89 @@ function pageShelf(rid) {
   hydrateImages(rid);
 }
 
+// ---------- criação de perfil (o nome é definido só aqui) ----------
+const AVATAR_COLORS = ['#ff4d8d', '#7c5cff', '#22d3ee', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#a855f7'];
+const onb = { color: AVATAR_COLORS[0], genres: new Set(), name: '' };
+function pageOnboarding() {
+  applyTheme(THEMES.default);
+  $$('[data-nav]').forEach((a) => a.classList.remove('on'));
+  const genres = [...new Set([...CATALOG.flatMap((a) => a.genres), 'Romance', 'Esportes', 'Terror', 'Ficção Científica'])];
+  const err = onb.name ? Store.nameError(onb.name) : null;
+  app.innerHTML = `
+  <section class="onboarding panel">
+    <div class="onb-avatar"><span class="avatar xl" style="background:${onb.color}">${esc(onb.name[0]?.toUpperCase() || '絆')}</span></div>
+    <h1>Crie seu perfil</h1>
+    <p class="muted">Escolha como a comunidade vai te conhecer. <b>O nome de usuário não pode ser alterado depois.</b></p>
+    <form class="form" data-form="onboarding" novalidate>
+      <label class="field">
+        <span>Nome de usuário</span>
+        <span class="at-input"><span>@</span><input type="text" name="name" value="${esc(onb.name)}" maxlength="20" placeholder="seu_nome" autocomplete="off" required></span>
+        <small class="hint ${err ? 'bad' : onb.name ? 'good' : ''}" id="name-hint">${err || (onb.name ? '✓ Nome disponível' : '3 a 20 caracteres: letras, números, ponto ou _')}</small>
+      </label>
+      <div class="field"><span>Cor do avatar</span>
+        <div class="swatches">${AVATAR_COLORS.map((c) => `<button type="button" class="swatch ${c === onb.color ? 'on' : ''}" style="background:${c}" data-action="onb-color" data-c="${c}" aria-label="Cor ${c}"></button>`).join('')}</div>
+      </div>
+      <div class="field"><span>Gêneros favoritos <small class="muted">(opcional)</small></span>
+        <div class="chips">${genres.map((g) => `<button type="button" class="chip ${onb.genres.has(g) ? 'on' : ''}" data-action="onb-genre" data-g="${esc(g)}">${esc(g)}</button>`).join('')}</div>
+      </div>
+      <button class="btn primary big">Começar minha jornada</button>
+    </form>
+  </section>`;
+}
+
+function badgeCard(b) {
+  const t = TIERS[b.tier];
+  const pct = Math.round((b.value / b.goal) * 100);
+  return `
+  <div class="badge-card ${b.unlockedAt ? 'got' : 'locked'}" style="--tier:${t.color}">
+    <span class="medal">${b.icon}</span>
+    <div>
+      <div class="badge-name">${esc(b.name)}</div>
+      <div class="small muted">${esc(b.desc)}</div>
+      ${b.unlockedAt
+        ? `<div class="badge-meta"><span class="tier">${t.label}</span> desbloqueada ${ago(b.unlockedAt)}</div>`
+        : `<div class="badge-prog"><i style="width:${pct}%"></i></div><div class="badge-meta">${b.value}/${b.goal} · <span class="tier">${t.label}</span></div>`}
+    </div>
+  </div>`;
+}
+
 function pageProfile(rid) {
   applyTheme(THEMES.default);
   const u = Store.user;
   const lib = Store.library();
-  const eps = lib.reduce((s, e) => s + (e.ep || 0), 0);
+  const st = Store.stats();
+  const lv = Badges.level();
+  const all = Badges.list();
+  const got = all.filter((b) => b.unlockedAt).sort((a, b) => b.unlockedAt - a.unlockedAt);
+  const locked = all.filter((b) => !b.unlockedAt).sort((a, b) => b.value / b.goal - a.value / b.goal);
   const rated = lib.filter((e) => e.rating);
   const avg = rated.length ? (rated.reduce((s, e) => s + e.rating, 0) / rated.length).toFixed(1) : '—';
   const counts = Object.entries(STATUS).map(([k, s]) => [s.label, lib.filter((e) => e.status === k).length]);
   const maxC = Math.max(1, ...counts.map((c) => c[1]));
   const favs = lib.filter((e) => e.fav);
+  const eps = st.eps;
   app.innerHTML = `
-    <div class="profile-head">
-      ${avatar(u.name)}
-      <form data-form="name" class="form-row" style="flex:1;min-width:240px">
-        <input type="text" name="name" value="${esc(u.name)}" maxlength="30" aria-label="Seu nome" style="max-width:280px;font-size:20px;font-weight:700">
-        <button class="btn">Salvar nome</button>
-      </form>
-    </div>
-    <div class="stat-grid section" style="margin-top:28px">
+    <section class="profile-card panel">
+      <div class="ring" style="--p:${Math.round((lv.into / lv.need) * 100)}">${avatar(u.name, 'xl')}<span class="lvl">${lv.lvl}</span></div>
+      <div class="who">
+        <h1>@${esc(u.name)}</h1>
+        <div class="rank">${esc(lv.rank)} · Nível ${lv.lvl}</div>
+        <div class="xp"><div class="badge-prog"><i style="width:${(lv.into / lv.need) * 100}%"></i></div><span class="small muted">${lv.into}/${lv.need} XP para o nível ${lv.lvl + 1}</span></div>
+        <div class="small muted">Membro desde ${new Date(u.since).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}${u.genres?.length ? ' · curte ' + u.genres.map(esc).join(', ') : ''}</div>
+      </div>
+      <div class="showcase">
+        <div class="small muted">Badges recentes</div>
+        <div class="showcase-row">${got.slice(0, 4).map((b) => `<span class="medal" style="--tier:${TIERS[b.tier].color}" title="${esc(b.name)}">${b.icon}</span>`).join('') || '<span class="small muted">Nenhuma ainda</span>'}</div>
+        <div class="small"><b>${got.length}</b>/${all.length} desbloqueadas</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>🏅 Badges</h2><span class="muted small">use a plataforma para desbloquear</span></div>
+      <div class="badge-grid">${got.map(badgeCard).join('')}${locked.map(badgeCard).join('')}</div>
+    </section>
+
+    <div class="stat-grid section" style="margin-top:40px">
       <div class="panel stat"><div class="n">${lib.filter((e) => e.status).length}</div><div class="muted">animes na estante</div></div>
       <div class="panel stat"><div class="n">${eps}</div><div class="muted">episódios assistidos</div></div>
       <div class="panel stat"><div class="n">${Math.round(eps * 23 / 60)}h</div><div class="muted">de anime (aprox.)</div></div>
@@ -410,6 +497,7 @@ function route(keep) {
   $$('[data-nav]').forEach((a) => a.classList.toggle('on', a.dataset.nav === navKey));
   const y = window.scrollY;
   if (name !== 'anime') page = {};
+  if (!Store.user.created) { window.scrollTo(0, 0); return pageOnboarding(); }
   if (keep !== true) {
     if (name !== 'anime' || page.anime?.id !== +arg) window.scrollTo(0, 0);
     app.style.animation = 'none'; void app.offsetWidth; app.style.animation = '';
@@ -446,7 +534,9 @@ const actions = {
   },
   rate: (b) => { Store.setRating(page.anime, +b.dataset.n); drawAnime(); },
   fav: () => { const e = Store.toggleFav(page.anime); toast(e.fav ? '♥ Adicionado aos favoritos' : 'Removido dos favoritos'); drawAnime(); },
-  reveal: (b) => { revealed.add(b.dataset.id); rerender(); },
+  reveal: (b) => { revealed.add(b.dataset.id); Store.countReveal(); rerender(); },
+  'onb-color': (b) => { onb.color = b.dataset.c; pageOnboarding(); },
+  'onb-genre': (b) => { const g = b.dataset.g; onb.genres.has(g) ? onb.genres.delete(g) : onb.genres.add(g); pageOnboarding(); },
   like: (b) => { Store.toggleLike(b.dataset.id); rerender(); },
   reset: () => { if (confirm('Apagar estante, resenhas e tópicos salvos neste navegador?')) { Store.reset(); toast('Tudo zerado'); rerender(); } },
 };
@@ -461,17 +551,45 @@ const forms = {
     location.hash = `#/topico/${t.id}`;
   },
   reply: (f) => { Store.addReply(f.dataset.id, f.body.value); rerender(); },
-  name: (f) => { Store.setName(f.name.value); toast('Nome salvo'); rerender(); },
+  onboarding: (f) => {
+    const name = f.name.value.trim();
+    const err = Store.nameError(name);
+    if (err) { onb.name = name; pageOnboarding(); $('[data-form=onboarding] input[name=name]').focus(); return; }
+    Store.createProfile({ name, color: onb.color, genres: [...onb.genres] });
+    toast(`Boas-vindas, @${name}!`);
+    location.hash = '#/perfil';
+    route();
+  },
 };
 
+// Toda ação pode desbloquear uma badge: confere depois de cada clique ou envio
 document.addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-action]');
-  if (b && actions[b.dataset.action]) { ev.preventDefault(); actions[b.dataset.action](b, ev); }
+  if (b && actions[b.dataset.action]) {
+    ev.preventDefault();
+    actions[b.dataset.action](b, ev);
+    if (checkBadges() && location.hash === '#/perfil') rerender();
+  }
 });
 document.addEventListener('submit', (ev) => {
   const f = ev.target;
   const key = f.id === 'search' ? 'search' : f.dataset.form;
-  if (forms[key]) { ev.preventDefault(); forms[key](f); }
+  if (forms[key]) {
+    ev.preventDefault();
+    forms[key](f);
+    if (checkBadges() && location.hash === '#/perfil') rerender();
+  }
+});
+// Validação do nome enquanto digita (sem redesenhar a tela, para não perder o foco)
+document.addEventListener('input', (ev) => {
+  if (ev.target.closest('[data-form=onboarding]') && ev.target.name === 'name') {
+    onb.name = ev.target.value.trim();
+    const err = onb.name ? Store.nameError(onb.name) : null;
+    const h = $('#name-hint');
+    h.className = `hint ${err ? 'bad' : onb.name ? 'good' : ''}`;
+    h.textContent = err || (onb.name ? '✓ Nome disponível' : '3 a 20 caracteres: letras, números, ponto ou _');
+    $('.onb-avatar .avatar').textContent = onb.name[0]?.toUpperCase() || '絆';
+  }
 });
 document.addEventListener('change', (ev) => {
   if (ev.target.dataset.actionInput === 'ep-set') {
@@ -479,6 +597,7 @@ document.addEventListener('change', (ev) => {
     const e = Store.setEp(page.anime, +ev.target.value);
     if (e.status === 'completo' && e0.status !== 'completo') toast('🎉 Anime concluído!');
     drawAnime();
+    checkBadges();
   }
 });
 
