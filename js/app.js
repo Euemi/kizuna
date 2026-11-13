@@ -67,6 +67,15 @@ function applyTheme(t) {
     setTimeout(() => { r.style.setProperty('--pattern', t.pattern); bg.dataset.p = t.pattern; bg.classList.remove('swap'); }, 250);
   }
   FX.set(t.effect, [t.accent, t.accent2, t.light ? t.muted : t.text]);
+  // Cenário desenhado do mundo (só nos animes curados)
+  const w = t.world || '';
+  r.dataset.world = w;
+  const sc = $('.scene');
+  if (sc.dataset.w !== w) {
+    sc.dataset.w = w;
+    sc.classList.add('swap');
+    setTimeout(() => { if (sc.dataset.w !== w) return; sc.innerHTML = Scenes.render(w); sc.classList.remove('swap'); }, 300);
+  }
   document.querySelector('meta[name=theme-color]')?.setAttribute('content', t.bg);
 }
 
@@ -228,7 +237,18 @@ function pageAnime(rid, id) {
     if (rid !== routeId) return;
     imgCache[id] = d.image;
     page.anime = merge(cur, d);
-    if (!cur) applyTheme(themeFor(d));
+    if (!cur) {
+      applyTheme(themeFor(d));
+      // Sinopse da AniList vem em inglês: mostra a tradução (do cache ou buscando agora)
+      const pt = Api.translated(d.synopsis);
+      page.anime.synopsisPt = pt || (d.synopsis ? 'loading' : null);
+      if (!pt && d.synopsis) {
+        Api.translate(d.synopsis)
+          .then((t) => { if (page.anime?.id === id) page.anime.synopsisPt = t; })
+          .catch(() => { if (page.anime?.id === id) page.anime.synopsisPt = 'erro'; })
+          .finally(() => { if (rid === routeId && page.anime?.id === id) drawAnime(); });
+      }
+    }
     drawAnime();
   }).catch(() => {
     if (rid !== routeId || cur) return;
@@ -297,8 +317,9 @@ function drawAnime() {
       </div>
 
       ${page.tab === 'sobre' ? `
-        <p class="synopsis">${esc(a.synopsis || 'Sem sinopse disponível.')}</p>
-        ${!CATALOG_BY_ID[a.id] && a.synopsis ? '<p class="small muted">Sinopse original do MyAnimeList.</p>' : ''}
+        ${a.synopsisPt === 'loading' ? '<p class="synopsis muted">Traduzindo a sinopse para o português…</p>'
+          : `<p class="synopsis">${esc((a.synopsisPt && a.synopsisPt !== 'erro' ? a.synopsisPt : a.synopsis) || 'Sem sinopse disponível.')}</p>`}
+        ${a.synopsisPt && a.synopsisPt !== 'loading' ? `<p class="small muted">${a.synopsisPt === 'erro' ? 'Não foi possível traduzir agora, então a sinopse está no original em inglês.' : 'Sinopse da AniList traduzida automaticamente.'}</p>` : ''}
         ${threads.length ? `<div class="section"><div class="section-head"><h2>Discussões recentes</h2></div>${threads.slice(0, 2).map(threadItem).join('')}</div>` : ''}
       ` : ''}
 

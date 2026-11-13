@@ -12,8 +12,8 @@ Kizuna é uma plataforma para descobrir animes, montar sua estante e discutir co
 
 | | |
 |---|---|
-| 🎨 **Temas por anime** | Demon Slayer tem xadrez verde e preto com pétalas de glicínia, Death Note tem linhas de caderno e chuva, Bocchi the Rock! tem notas musicais flutuando, Fullmetal Alchemist tem um círculo de transmutação ao fundo... São 12 mundos criados à mão, e os outros animes ganham um tema gerado a partir do gênero e da cor da capa. |
-| 🔍 **Descobrir** | Destaques com filtro por gênero, animes em exibição, os mais populares e busca em todo o catálogo. |
+| 🎨 **Temas por anime** | Cada mundo curado tem um cenário desenhado e animado: a vila ninja ao entardecer com shurikens caindo em Naruto, glicínias e borboletas em Demon Slayer, ondas, navio e bússola em One Piece, a muralha e a fumaça dos titãs em Attack on Titan, o caderno, a maçã e as páginas em Death Note, o campo de flores de Frieren, holofotes e a caixa de papelão em Bocchi the Rock!, lanternas, ervas e o palácio interno em Diários de uma Apotecária, grimórios e antimagia em Black Clover, o ゴゴゴ ameaçador em JoJo... São 24 mundos criados à mão (as continuações e temporadas novas entram no mesmo mundo), e os outros animes ganham um cenário do gênero com a cor da capa. |
+| 🔍 **Descobrir** | Destaques com filtro por gênero, animes em exibição, os mais populares e busca em todo o catálogo, com as sinopses traduzidas automaticamente para o português. |
 | 📚 **Estante** | Assistindo, Quero assistir, Completo, Abandonado e Favoritos. |
 | ▶️ **Progresso por episódio** | Botão "+1", barra de progresso e mudança automática de status ao começar ou terminar um anime. |
 | ⭐ **Notas e resenhas** | Nota de 1 a 5, e cada resenha mostra em que episódio a pessoa estava quando escreveu. |

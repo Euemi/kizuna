@@ -35,7 +35,47 @@ const Api = (() => {
     return p;
   }
 
-  const strip = (s) => (s || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/\n{3,}/g, '\n\n').trim();
+  const strip = (s) => (s || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')
+    .replace(/\(\s*Source:[^)]*\)/gi, '').replace(/^\s*Notes?:.*$/gim, '').replace(/\n{3,}/g, '\n\n').trim();
+
+  // ===== Tradução das sinopses (inglês → português), guardada no navegador =====
+  const TR_KEY = 'kizuna:tr';
+  let tr = {};
+  try { tr = JSON.parse(localStorage.getItem(TR_KEY)) || {}; } catch (e) { /* ignora */ }
+  const trKey = (t) => t.length + ':' + t.slice(0, 60);
+  async function google(text) {
+    const res = await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=pt&dt=t&q=' + encodeURIComponent(text));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return (await res.json())[0].map((x) => x[0]).join('');
+  }
+  async function mymemory(text) {
+    // Serviço reserva: só aceita trechos curtos, então junta frases em blocos de até ~450 caracteres
+    const parts = text.match(/[^.!?\n]+[.!?]*\s*|\n+/g) || [text];
+    const chunks = [];
+    for (const s of parts) if (chunks.length && (chunks.at(-1) + s).length < 450) chunks[chunks.length - 1] += s; else chunks.push(s);
+    const out = [];
+    for (const c of chunks) {
+      if (!c.trim()) { out.push(c); continue; }
+      const res = await fetch('https://api.mymemory.translated.net/get?langpair=en|pt-BR&q=' + encodeURIComponent(c));
+      const j = await res.json();
+      if (j.responseStatus !== 200) throw new Error(j.responseDetails);
+      out.push(j.responseData.translatedText + (/\s$/.test(c) ? ' ' : ''));
+    }
+    return out.join('');
+  }
+  const translated = (text) => (text ? tr[trKey(text)] || null : null);
+  async function translate(text) {
+    if (!text) return text;
+    const hit = translated(text);
+    if (hit) return hit;
+    let out;
+    try { out = await google(text); } catch (e) { out = await mymemory(text); }
+    tr[trKey(text)] = out;
+    const keys = Object.keys(tr);
+    if (keys.length > 300) delete tr[keys[0]];
+    try { localStorage.setItem(TR_KEY, JSON.stringify(tr)); } catch (e) { /* ignora */ }
+    return out;
+  }
   function norm(m) {
     return {
       id: m.idMal,
@@ -59,6 +99,7 @@ const Api = (() => {
 
   const byId = {};
   return {
+    translate, translated,
     anime: (id) => byId[id] ? Promise.resolve(byId[id])
       : gql(`query($id:Int){ Media(idMal:$id, type:ANIME){ ${FIELDS} } }`, { id }).then((d) => (byId[id] = norm(d.Media))),
     // Busca várias de uma vez (1 requisição) — usado para as capas dos cards
